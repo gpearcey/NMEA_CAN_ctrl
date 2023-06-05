@@ -1,1 +1,4 @@
 
+[submodule "external/esp32-mcp2515"]
+	path = external/esp32-mcp2515
+	url = git@github.com:gpearcey/esp32-mcp2515.git
