@@ -1,0 +1,1 @@
+idf_component_register(SRCS "esp32_twai.cpp" INCLUDE_DIRS ".")
