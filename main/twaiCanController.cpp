@@ -70,13 +70,13 @@ void twaiCANController::read(NMEA_msg& msg){
 
 void twaiCANController::send(NMEA_msg msg){
 
-    twai_message_t message;//     = NMEAtoCAN(msg);
-    message.identifier = 0x8F80103;
-    message.extd = 1;
-    message.data_length_code = 8;
-    for (int i = 0; i < 8; i++) {
-        message.data[i] = 20;
-    }
+    twai_message_t message = NMEAtoCAN(msg);
+    //message.identifier = 0x8F80103;
+    //message.extd = 1;
+    //message.data_length_code = 8;
+    //for (int i = 0; i < 8; i++) {
+    //    message.data[i] = 20;
+    //}
     //Queue message for transmission
     if (twai_transmit(&message, pdMS_TO_TICKS(1000)) == ESP_OK) {
         ESP_LOGI(TAG,"Message queued for transmission\n");
@@ -90,9 +90,15 @@ twai_message_t twaiCANController::NMEAtoCAN(NMEA_msg msg){
     twai_message_t t_msg;
     t_msg.rtr = 0;
     
-    std::string strID = std::to_string(msg.priority) + std::to_string(msg.PGN) + std::to_string(msg.src);
-    t_msg.identifier = std::stoi(strID);
+    std::string strPriority = std::bitset<3>(msg.priority).to_string();
+
+    std::string strPGN = std::bitset<18>(msg.PGN).to_string();
+    std::string strSrc = std::bitset<8>(msg.src).to_string();
+
+    std::string strID = strPriority + strPGN + strSrc;
     
+    t_msg.identifier = std::stoi(strID, nullptr, 2);
+    ESP_LOGI(TAG, "Message ID to be sent: %lx \n", t_msg.identifier);
     t_msg.extd = true;
     t_msg.data_length_code = 8;
     t_msg.data[0] = msg.data[0];
