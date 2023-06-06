@@ -11,7 +11,7 @@ class CANController
 {
     public:
         virtual ~CANController() {}
-        virtual void init(gpio_num_t rxPin, gpio_num_t txPin) = 0;
+        virtual void init(gpio_num_t txPin, gpio_num_t rxPin) = 0;
         virtual void deinit() = 0;
         virtual void read(NMEA_msg& msg) = 0;
         virtual void send(NMEA_msg msg) = 0;
