@@ -1,6 +1,8 @@
 #ifndef _CAN_COMMON_
 #define _CAN_COMMON_
 
+#include <stdint.h>
+#include <string.h>
 
 /** Define the typical baudrate for CAN communication. */
 #ifdef CAN_BPS_500K

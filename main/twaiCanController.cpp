@@ -1,5 +1,5 @@
 #include "twaiCanController.h"
-#include <string>
+
 
 void twaiCANController::init(gpio_num_t rxPin, gpio_num_t txPin){
     this->controller.setCANPins(rxPin, txPin);
@@ -26,7 +26,7 @@ void twaiCANController::send(NMEA_msg msg){
     return;
 }
 
-CAN_FRAME NMEAtoCAN(NMEA_msg msg){
+CAN_FRAME twaiCANController::NMEAtoCAN(NMEA_msg msg){
     CAN_FRAME frame;
     frame.rtr = 0;
     
@@ -48,7 +48,7 @@ CAN_FRAME NMEAtoCAN(NMEA_msg msg){
 
 }
 
-NMEA_msg CANtoNMEA(CAN_FRAME frame){
+NMEA_msg twaiCANController::CANtoNMEA(CAN_FRAME frame){
     NMEA_msg msg;
     
     std::string strID = std::to_string(frame.id);
