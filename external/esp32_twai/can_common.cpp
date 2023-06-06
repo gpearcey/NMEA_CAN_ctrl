@@ -213,7 +213,7 @@ uint32_t CAN_COMMON::getDataSpeedFD()
 	return 0;
 }
 
-boolean CAN_COMMON::attachObj(CANListener *listener)
+bool CAN_COMMON::attachObj(CANListener *listener)
 {
 	for (int i = 0; i < SIZE_LISTENERS; i++)
 	{
@@ -227,7 +227,7 @@ boolean CAN_COMMON::attachObj(CANListener *listener)
 	return false;
 }
 
-boolean CAN_COMMON::detachObj(CANListener *listener)
+bool CAN_COMMON::detachObj(CANListener *listener)
 {
 	for (int i = 0; i < SIZE_LISTENERS; i++)
 	{

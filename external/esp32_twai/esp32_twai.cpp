@@ -10,7 +10,7 @@
 
 #include "esp32_twai.h"
 
-#define TAG = "esp32_twai"
+static const char* TAG = "esp32_twai";
 
                                                                         //tx,         rx,           mode
 twai_general_config_t twai_general_cfg = TWAI_GENERAL_CONFIG_DEFAULT(GPIO_NUM_17, GPIO_NUM_16, TWAI_MODE_NORMAL);
@@ -267,7 +267,7 @@ uint32_t ESP32CAN::beginAutoSpeed()
     {
         twai_speed_cfg = valid_timings[idx].cfg;
         disable();
-        ESP_LOGI(TAG, "Trying Speed %d", valid_timings[idx].speed);
+        ESP_LOGI(TAG, "Trying Speed %lu", valid_timings[idx].speed);
         enable();
         vTaskDelay(1000 / portTICK_PERIOD_MS);
         if (cyclesSinceTraffic < 2) //only would happen if there had been traffic
@@ -402,7 +402,7 @@ bool ESP32CAN::processFrame(twai_message_t &frame)
             
             //otherwise, send frame to input queue
             xQueueSend(rx_queue, &msg, 0);
-            ESP_LOGD(TAG, '_');
+            ESP_LOGD(TAG, "_");
             return true;
         }
     }
@@ -424,16 +424,16 @@ bool ESP32CAN::sendFrame(CAN_FRAME& txFrame)
     switch (twai_transmit(&__TX_frame, pdMS_TO_TICKS(4)))
     {
     case ESP_OK:
-        ESP_LOGD(TAG,'<');
+        ESP_LOGD(TAG,"<");
         break;
     case ESP_ERR_TIMEOUT:
-        ESP_LOGD(TAG,'T');
+        ESP_LOGD(TAG,"T");
         break;
     case ESP_ERR_INVALID_ARG:
     case ESP_FAIL:
     case ESP_ERR_INVALID_STATE:
     case ESP_ERR_NOT_SUPPORTED:
-        ESP_LOGD(TAG,'!');
+        ESP_LOGD(TAG,"!");
         break;
     }
     

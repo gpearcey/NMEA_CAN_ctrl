@@ -89,7 +89,7 @@ typedef union {
     uint8_t byte[8]; //alternate name so you can omit the s if you feel it makes more sense
     struct {
         uint8_t bitField[8];
-        const bool operator[]( int pos ) const
+        bool operator[]( int pos ) const
         {
             if (pos < 0 || pos > 63) return 0;
             int bitFieldIdx = pos / 8;
@@ -116,7 +116,7 @@ typedef union {
 
     struct {
         uint8_t bitField[64];
-        const bool operator[]( int pos ) const
+        bool operator[]( int pos ) const
         {
             if (pos < 0 || pos > 511) return 0; //64 8 bit bytes is 512 bits, we start counting bits at 0
             int bitfieldIdx = pos / 8;
@@ -227,8 +227,8 @@ public:
 	uint32_t getBusSpeed();
 	int setRXFilter(uint8_t mailbox, uint32_t id, uint32_t mask, bool extended);
     int setRXFilter(uint32_t id, uint32_t mask, bool extended);
-    boolean attachObj(CANListener *listener);
-	boolean detachObj(CANListener *listener);
+    bool attachObj(CANListener *listener);
+	bool detachObj(CANListener *listener);
     void setGeneralCallback( void (*cb)(CAN_FRAME *) );
 	void setCallback(uint8_t mailbox, void (*cb)(CAN_FRAME *));
     void removeCallback();

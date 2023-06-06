@@ -13,4 +13,4 @@ struct NMEA_msg {
     uint8_t data[8];
 };
 
-#endif
+#endif //NMEA_MSG_H
