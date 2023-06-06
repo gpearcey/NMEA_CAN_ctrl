@@ -1,10 +1,12 @@
 #ifndef TWAI_CAN_CONTROLLER_H
 #define TWAI_CAN_CONTROLLER_H
 
+#include <string>
 #include "CAN_controller.h"
 #include "esp32_twai.h"
 #include "NMEA_msg.h"
 #include "driver/gpio.h"
+
 
 class twaiCANController : public CANController
 {
