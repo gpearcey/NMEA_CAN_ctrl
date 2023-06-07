@@ -17,8 +17,7 @@ extern "C" void app_main(void)
     twai1.init(GPIO_NUM_34, GPIO_NUM_32);
     printf("finished init");
 
-
-    for (int i = 0; i < 100; i++){
+    for (int i = 0; i < 10; i++){
         NMEA_msg msg;
         msg.PGN = 127508;
         msg.src = 3;
@@ -36,7 +35,7 @@ extern "C" void app_main(void)
         printf("sending message number %d \n", i);
     }
     
-    for (int i = 0; i < 10; i++){
+    for (int i = 0; i < 100; i++){
         NMEA_msg rx_msg;
         twai1.read(rx_msg);
         printf("PGN: %u\n", rx_msg.PGN);
