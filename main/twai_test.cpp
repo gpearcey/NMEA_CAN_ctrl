@@ -17,7 +17,7 @@
 #define TX_TASK_PRIO            8       //Sending task priority
 #define RX_TASK_PRIO            9       //Receiving task priority
 #define CTRL_TSK_PRIO           10      //Control task priority
-#define MSG_ID                  0x8F80102  //11 bit standard format ID
+#define MSG_ID                  502267648//0x5f20103  //29 bit standard format ID
 #define EXAMPLE_TAG             "TWAI Self Test"
 
 static const twai_timing_config_t t_config = TWAI_TIMING_CONFIG_250KBITS();
@@ -106,8 +106,8 @@ extern "C" void app_main(void)
         return;
     }
 
-    send_msgs(11);
-    receive_msgs(5);
+    send_msgs(1000);
+    receive_msgs(10);
 
     //Stop the TWAI driver
     if (twai_stop() == ESP_OK) {

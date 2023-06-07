@@ -13,20 +13,20 @@ extern "C" void app_main(void)
     twai1.init();
 
     //Transmit messages
-    for (int i = 0; i < 10; i++){
+    for (int i = 0; i < 100; i++){
         NMEA_msg msg;
-        msg.PGN = 127508;
-        msg.src = 4;
-        msg.priority = 1;
+        msg.PGN = 128259;
+        msg.src = 3;
+        msg.priority = 6;
         msg.length = 8;
-        msg.data[0] = 0xDD;
-        msg.data[1] = 0xDD;
-        msg.data[2] = 0xDD;
-        msg.data[3] = 0xEE;
-        msg.data[4] = 0xEE;
-        msg.data[5] = 0xEE;
-        msg.data[6] = 0xEE;
-        msg.data[7] = 0xEE;
+        msg.data[0] = 0xAA;
+        msg.data[1] = 0xAA;
+        msg.data[2] = 0xAA;
+        msg.data[3] = 0xAA;
+        msg.data[4] = 0xAA;
+        msg.data[5] = 0xAA;
+        msg.data[6] = 0xAA;
+        msg.data[7] = 0xAA;
         twai1.transmit(msg);
     }
     
@@ -35,7 +35,7 @@ extern "C" void app_main(void)
         NMEA_msg rx_msg;
         twai1.receive(rx_msg);
         ESP_LOGD(TAG,"PGN: %u", rx_msg.PGN);
-        ESP_LOGD(TAG,"Data: %u", rx_msg.data[4]);
+        ESP_LOGD(TAG,"Data: %x %x %x %x %x %x %x %x ", rx_msg.data[0], rx_msg.data[1], rx_msg.data[2], rx_msg.data[3], rx_msg.data[4], rx_msg.data[5], rx_msg.data[6], rx_msg.data[7]);
         ESP_LOGD(TAG,"Data Length: %u", rx_msg.length);    
     }
 
