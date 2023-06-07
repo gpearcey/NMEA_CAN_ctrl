@@ -1,1 +1,0 @@
-idf_component_register(SRCS "esp32_twai.cpp" "can_common.cpp" INCLUDE_DIRS "." REQUIRES driver freertos)

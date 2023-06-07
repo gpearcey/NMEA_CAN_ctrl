@@ -1,57 +1,44 @@
-
 #include <stdio.h>
-#include <inttypes.h>
-#include "sdkconfig.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include "twaiCanController.h"
 #include "driver/gpio.h"
 #include "NMEA_msg.h"
+#include "esp_log.h"
+
+static const char* TAG = "test.cpp";
 
 extern "C" void app_main(void)
 {
-    printf("Hello world!\n");
+    twaiCANController twai1(GPIO_NUM_32, GPIO_NUM_34);
+
+    twai1.init();
+
+    //Transmit messages
+    for (int i = 0; i < 100; i++){
+        NMEA_msg msg;
+        msg.PGN = 128259;
+        msg.src = 3;
+        msg.priority = 6;
+        msg.length = 8;
+        msg.data[0] = 0xAA;
+        msg.data[1] = 0xAA;
+        msg.data[2] = 0xAA;
+        msg.data[3] = 0xAA;
+        msg.data[4] = 0xAA;
+        msg.data[5] = 0xAA;
+        msg.data[6] = 0xAA;
+        msg.data[7] = 0xAA;
+        twai1.transmit(msg);
+    }
     
-    twaiCANController twai1;
+    //Receive Messages
+    for (int i = 0; i < 100; i++){
+        NMEA_msg rx_msg;
+        twai1.receive(rx_msg);
+        ESP_LOGD(TAG,"PGN: %u", rx_msg.PGN);
+        ESP_LOGD(TAG,"Data: %x %x %x %x %x %x %x %x ", rx_msg.data[0], rx_msg.data[1], rx_msg.data[2], rx_msg.data[3], rx_msg.data[4], rx_msg.data[5], rx_msg.data[6], rx_msg.data[7]);
+        ESP_LOGD(TAG,"Data Length: %u", rx_msg.length);    
+    }
 
-    twai1.init(GPIO_NUM_34, GPIO_NUM_32);
-    printf("finished init");
 
-
-    //for (int i = 0; i < 100; i++){
-    //    NMEA_msg msg;
-    //    msg.PGN = 127488;
-    //    msg.src = 0;
-    //    msg.priority = 3;
-    //    msg.length = 8;
-    //    msg.data[0] = 0xDD;
-    //    msg.data[1] = 0xDD;
-    //    msg.data[2] = 0xDD;
-    //    msg.data[3] = 0xEE;
-    //    msg.data[4] = 0x45;
-    //    msg.data[5] = 0xEE;
-    //    msg.data[6] = 0x34;
-    //    msg.data[7] = 0x45;
-    //    twai1.send(msg);
-    //    printf("sending message number %d \n", i);
-    //}
-    
-    //for (int i = 0; i < 100; i++){
-    //    NMEA_msg rx_msg;
-    //    twai1.read(rx_msg);
-    //    printf("PGN: %u\n", rx_msg.PGN);
-    //    printf("Data: %u\n", rx_msg.data[4]);
-    //    printf("\n");    
-    //}
-    //NMEA_msg rx_msg;
-    //twai1.read(rx_msg);
-    //printf("PGN: %u\n", rx_msg.PGN);
-    //printf("Data: %u\n", rx_msg.data[4]);
-    //printf("\n");
-//
     twai1.deinit();
-
-    printf("finished deinit");
-
-
 }
