@@ -2,7 +2,6 @@
 
 static const char* TAG = "twaiCanController";
 
-
 void twaiCANController::init(gpio_num_t txPin, gpio_num_t rxPin){
     
    
@@ -42,7 +41,7 @@ void twaiCANController::deinit(){
     return;
 }
 
-void twaiCANController::read(NMEA_msg& msg){
+void twaiCANController::receive(NMEA_msg& msg){
     //Wait for message to be received
     twai_message_t message;
     if (twai_receive(&message, pdMS_TO_TICKS(1000)) == ESP_OK) {
@@ -51,33 +50,14 @@ void twaiCANController::read(NMEA_msg& msg){
         ESP_LOGI(TAG,"Failed to receive message\n");
         return;
     }
-
-        //Process received message
-    //if (message.extd) {
-    //    printf("Message is in Extended Format\n");
-    //} else {
-    //    printf("Message is in Standard Format\n");
-    //}
-    //printf("ID is %lu\n", message.identifier);
-    //if (!(message.rtr)) {
-    //    for (int i = 0; i < message.data_length_code; i++) {
-    //        printf("Data byte %d = %d\n", i, message.data[i]);
-    //    }
-    //}
+    //convert message to NMEA format
     msg = CANtoNMEA(message);
     return;
 }
 
-void twaiCANController::send(NMEA_msg msg){
-
+void twaiCANController::transmit(NMEA_msg msg){
+    //convert message to twai (CAN) format
     twai_message_t message = NMEAtoCAN(msg);
-    //message.identifier = 0x8F80103;
-    //message.extd = 1;
-    //message.data_length_code = 8;
-    //for (int i = 0; i < 8; i++) {
-    //    message.data[i] = 20;
-    //}
-    //Queue message for transmission
     if (twai_transmit(&message, pdMS_TO_TICKS(1000)) == ESP_OK) {
         ESP_LOGI(TAG,"Message queued for transmission\n");
     } else {
@@ -88,19 +68,25 @@ void twaiCANController::send(NMEA_msg msg){
 
 twai_message_t twaiCANController::NMEAtoCAN(NMEA_msg msg){
     twai_message_t t_msg;
-    t_msg.rtr = 0;
-    
-    std::string strPriority = std::bitset<3>(msg.priority).to_string();
 
+    //set remote transmission request to 0 to send standard data frame
+    t_msg.rtr = 0;    
+
+    //create CAN ID
+    std::string strPriority = std::bitset<3>(msg.priority).to_string();
     std::string strPGN = std::bitset<18>(msg.PGN).to_string();
     std::string strSrc = std::bitset<8>(msg.src).to_string();
-
-    std::string strID = strPriority + strPGN + strSrc;
-    
+    std::string strID = strPriority + strPGN + strSrc;    
     t_msg.identifier = std::stoi(strID, nullptr, 2);
-    ESP_LOGI(TAG, "Message ID to be sent: %lx \n", t_msg.identifier);
+
+    ESP_LOGD(TAG, "Message ID Created: %lx \n", t_msg.identifier);
+
+    //all NMEA messages have extended 29 bt ID
     t_msg.extd = true;
+
+    //message length in bytes
     t_msg.data_length_code = 8;
+    
     t_msg.data[0] = msg.data[0];
     t_msg.data[1] = msg.data[1];
     t_msg.data[2] = msg.data[2];
@@ -116,23 +102,21 @@ twai_message_t twaiCANController::NMEAtoCAN(NMEA_msg msg){
 
 NMEA_msg twaiCANController::CANtoNMEA(twai_message_t t_msg){
     NMEA_msg msg;
-    if (!(t_msg.rtr) && (t_msg.extd)){
-        
+    if (!(t_msg.rtr) && (t_msg.extd)){        
     
-        std::string strID = std::bitset<32>(t_msg.identifier).to_string();
-        printf("ID: %lx \n",t_msg.identifier);
-        
-        //std::reverse(strID.begin(), strID.end());
+        ESP_LOGD(TAG,"ID to be converted: %lx \n",t_msg.identifier);
+
+        //parse the ID to get priority, PGN and source
+        std::string strID = std::bitset<32>(t_msg.identifier).to_string();    
         std::string strSrc = strID.substr(24,8);
         std::string strPGN = strID.substr(6,18);
         std::string strPriority = strID.substr(3,3);
 
         msg.PGN = std::stoi(strPGN, nullptr, 2);
         msg.src = std::stoi(strSrc, nullptr, 2);
-        //msg.name TODO
         msg.priority = std::stoi(strPriority);
         msg.length = t_msg.data_length_code;
-        //msg.numFeilds TODO
+
         msg.data[0] = t_msg.data[0];
         msg.data[1] = t_msg.data[1]; 
         msg.data[2] = t_msg.data[2]; 
@@ -142,12 +126,9 @@ NMEA_msg twaiCANController::CANtoNMEA(twai_message_t t_msg){
         msg.data[6] = t_msg.data[6]; 
         msg.data[7] = t_msg.data[7];
 
-        return msg;
-
     }
     else{
         ESP_LOGI(TAG, "Incomming message is not in NMEA format");
-        return msg;
     }
-
+    return msg;
 }

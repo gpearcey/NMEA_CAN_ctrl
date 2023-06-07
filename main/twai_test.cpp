@@ -1,9 +1,9 @@
+/**
+ * Twai Self Test to ensure drivers are functioning properly
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
-//#include "freertos/FreeRTOS.h"
-//#include "freertos/task.h"
-//#include "freertos/semphr.h"
-//#include "esp_err.h"
 #include "esp_log.h"
 #include "driver/twai.h"
 
@@ -12,8 +12,8 @@
 //Example Configurations
 #define NO_OF_MSGS              100
 #define NO_OF_ITERS             3
-//#define TX_GPIO_NUM             32
-//#define RX_GPIO_NUM             34
+#define TX_GPIO_NUM             GPIO_NUM_32
+#define RX_GPIO_NUM             GPIO_NUM_34
 #define TX_TASK_PRIO            8       //Sending task priority
 #define RX_TASK_PRIO            9       //Receiving task priority
 #define CTRL_TSK_PRIO           10      //Control task priority
@@ -24,7 +24,7 @@ static const twai_timing_config_t t_config = TWAI_TIMING_CONFIG_250KBITS();
 //Filter all other IDs except MSG_ID
 static const twai_filter_config_t f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
 //Set to NO_ACK mode due to self testing with single module
-static const twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT(GPIO_NUM_32, GPIO_NUM_34, TWAI_MODE_NORMAL);
+static const twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT(TX_GPIO_NUM, RX_GPIO_NUM, TWAI_MODE_NORMAL);
 
 
 /* --------------------------- Tasks and Functions -------------------------- */
@@ -49,7 +49,7 @@ void send_msg(){
 void receive_msg(){
     //Wait for message to be received
     twai_message_t message;
-    if (twai_receive(&message, pdMS_TO_TICKS(10000)) == ESP_OK) {
+    if (twai_receive(&message, pdMS_TO_TICKS(1000)) == ESP_OK) {
         printf("Message received\n");
     } else {
         printf("Failed to receive message\n");

@@ -1,22 +1,18 @@
-
 #include <stdio.h>
-#include <inttypes.h>
-#include "sdkconfig.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include "twaiCanController.h"
 #include "driver/gpio.h"
 #include "NMEA_msg.h"
+#include "esp_log.h"
+
+static const char* TAG = "test.cpp";
 
 extern "C" void app_main(void)
 {
-    printf("Hello world!\n");
-    
     twaiCANController twai1;
 
     twai1.init(GPIO_NUM_34, GPIO_NUM_32);
-    printf("finished init");
 
+    //Transmit messages
     for (int i = 0; i < 10; i++){
         NMEA_msg msg;
         msg.PGN = 127508;
@@ -31,23 +27,19 @@ extern "C" void app_main(void)
         msg.data[5] = 0xEE;
         msg.data[6] = 0xEE;
         msg.data[7] = 0xEE;
-        twai1.send(msg);
-        printf("sending message number %d \n", i);
+        twai1.transmit(msg);
     }
     
+    //Receive Messages
     for (int i = 0; i < 100; i++){
         NMEA_msg rx_msg;
-        twai1.read(rx_msg);
-        printf("PGN: %u\n", rx_msg.PGN);
-        printf("Data: %u\n", rx_msg.data[4]);
-        printf("Data Length: %u\n", rx_msg.length);
-        printf("\n");    
+        twai1.receive(rx_msg);
+        ESP_LOGD(TAG,"PGN: %u\n", rx_msg.PGN);
+        ESP_LOGD(TAG,"Data: %u\n", rx_msg.data[4]);
+        ESP_LOGD(TAG,"Data Length: %u\n", rx_msg.length);
+        ESP_LOGD(TAG,"\n");    
     }
 
 
     twai1.deinit();
-
-    printf("finished deinit");
-
-
 }
