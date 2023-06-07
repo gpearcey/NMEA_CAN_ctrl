@@ -20,18 +20,18 @@ extern "C" void app_main(void)
 
     for (int i = 0; i < 100; i++){
         NMEA_msg msg;
-        msg.PGN = 127489;
-        msg.src = 5;
-        msg.priority = 3;
+        msg.PGN = 127508;
+        msg.src = 3;
+        msg.priority = 1;
         msg.length = 8;
         msg.data[0] = 0xDD;
         msg.data[1] = 0xDD;
         msg.data[2] = 0xDD;
         msg.data[3] = 0xEE;
-        msg.data[4] = 0x45;
+        msg.data[4] = 0xEE;
         msg.data[5] = 0xEE;
-        msg.data[6] = 0x34;
-        msg.data[7] = 0x45;
+        msg.data[6] = 0xEE;
+        msg.data[7] = 0xEE;
         twai1.send(msg);
         printf("sending message number %d \n", i);
     }
