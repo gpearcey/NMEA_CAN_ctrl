@@ -8,9 +8,9 @@ static const char* TAG = "test.cpp";
 
 extern "C" void app_main(void)
 {
-    twaiCANController twai1;
+    twaiCANController twai1(GPIO_NUM_34, GPIO_NUM_32);
 
-    twai1.init(GPIO_NUM_34, GPIO_NUM_32);
+    twai1.init();
 
     //Transmit messages
     for (int i = 0; i < 10; i++){

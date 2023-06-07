@@ -10,7 +10,8 @@
 class twaiCANController : public CANController
 {
     public:
-        void init(gpio_num_t txPin, gpio_num_t rxPin) override;
+        twaiCANController(gpio_num_t txPin, gpio_num_t rxPin);
+        void init() override;
         void deinit() override;
         void receive(NMEA_msg& msg) override;
         void transmit(NMEA_msg msg) override;
@@ -24,7 +25,7 @@ class twaiCANController : public CANController
         //Filter for incoming messages
         static constexpr twai_filter_config_t f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
         //Configure TX and RX pins, set twai mode
-        static constexpr twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT(GPIO_NUM_32, GPIO_NUM_34, TWAI_MODE_NORMAL);
+        const twai_general_config_t g_config; 
 
 
 };

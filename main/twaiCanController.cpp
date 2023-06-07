@@ -2,8 +2,9 @@
 
 static const char* TAG = "twaiCanController";
 
-void twaiCANController::init(gpio_num_t txPin, gpio_num_t rxPin){
-    
+twaiCANController::twaiCANController(gpio_num_t txPin, gpio_num_t rxPin) : g_config(TWAI_GENERAL_CONFIG_DEFAULT(txPin, rxPin, TWAI_MODE_NORMAL)){}
+
+void twaiCANController::init(){
    
     //Install TWAI driver
     if (twai_driver_install(&g_config, &t_config, &f_config) == ESP_OK) {
