@@ -11,7 +11,7 @@ extern "C" void app_main(void)
     twaiCANController twai1(GPIO_NUM_32, GPIO_NUM_34);
 
     twai1.init();
-
+/**
     //Transmit messages
     for (int i = 0; i < 100; i++){
         NMEA_msg msg;
@@ -37,6 +37,19 @@ extern "C" void app_main(void)
         ESP_LOGD(TAG,"PGN: %u", rx_msg.PGN);
         ESP_LOGD(TAG,"Data: %x %x %x %x %x %x %x %x ", rx_msg.data[0], rx_msg.data[1], rx_msg.data[2], rx_msg.data[3], rx_msg.data[4], rx_msg.data[5], rx_msg.data[6], rx_msg.data[7]);
         ESP_LOGD(TAG,"Data Length: %u", rx_msg.length);    
+    }*/
+
+    //Transmit fast packet messages
+    for (int i = 0; i < 100; i++){
+        NMEA_msg msg;
+        msg.PGN = 129029;
+        msg.src = 2;
+        msg.priority = 6;
+        msg.length = 43;
+        for(int i = 0; i<msg.length; i++){
+            msg.data[i] = i;
+        }
+        twai1.transmit(msg);
     }
 
 

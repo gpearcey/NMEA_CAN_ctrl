@@ -1,4 +1,6 @@
 #include "twaiCanController.h"
+#include <cmath>
+#include <inttypes.h>
 
 static const char* TAG = "twaiCanController";
 
@@ -98,6 +100,8 @@ void twaiCANController::TransmitFastPacket(NMEA_msg msg){
 
     int frame_count = 0;
 
+    int total_frames = std::ceil(msg.length / can_frame_size_);
+
     //transmit the first frame
     //the first byte of the first frame is the packet ID, the second byte is total message length in bytes
     std::string str_seq_count = std::bitset<3>(seq_count_).to_string();
@@ -113,7 +117,7 @@ void twaiCANController::TransmitFastPacket(NMEA_msg msg){
     t_msg.data[5] = msg.data[3];
     t_msg.data[6] = msg.data[4];
     t_msg.data[7] = msg.data[5];
-
+    ESP_LOGD(TAG, "About to transmit fast packet frame %d of %d with id: %" PRIu32 " and data: %x %x %x %x %x %x %x %x ", frame_count, total_frames, t_msg.identifier, t_msg.data[0], t_msg.data[1], t_msg.data[2], t_msg.data[3], t_msg.data[4], t_msg.data[5], t_msg.data[6], t_msg.data[7]);
     TransmitNormal(t_msg);
 
     int data_idx = 6;
@@ -137,6 +141,7 @@ void twaiCANController::TransmitFastPacket(NMEA_msg msg){
                 data_idx++;
             }
         }
+        ESP_LOGD(TAG, "About to transmit fast packet frame %d of %d with id: %" PRIu32 " and data: %x %x %x %x %x %x %x %x ", frame_count, total_frames, t_msg.identifier, t_msg.data[0], t_msg.data[1], t_msg.data[2], t_msg.data[3], t_msg.data[4], t_msg.data[5], t_msg.data[6], t_msg.data[7]);
         TransmitNormal(t_msg);
         frame_count++;
     }

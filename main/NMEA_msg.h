@@ -8,9 +8,9 @@ struct NMEA_msg {
     uint8_t src;
     std::string name;
     uint8_t priority : 3;
-    uint8_t length : 4;
+    int length;
     int numFields;
-    uint8_t data[8];
+    uint8_t data[223];
 };
 
 #endif //NMEA_MSG_H
