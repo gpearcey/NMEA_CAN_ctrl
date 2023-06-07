@@ -8,7 +8,7 @@ static const char* TAG = "test.cpp";
 
 extern "C" void app_main(void)
 {
-    twaiCANController twai1(GPIO_NUM_34, GPIO_NUM_32);
+    twaiCANController twai1(GPIO_NUM_32, GPIO_NUM_34);
 
     twai1.init();
 
@@ -16,7 +16,7 @@ extern "C" void app_main(void)
     for (int i = 0; i < 10; i++){
         NMEA_msg msg;
         msg.PGN = 127508;
-        msg.src = 3;
+        msg.src = 4;
         msg.priority = 1;
         msg.length = 8;
         msg.data[0] = 0xDD;
@@ -34,10 +34,9 @@ extern "C" void app_main(void)
     for (int i = 0; i < 100; i++){
         NMEA_msg rx_msg;
         twai1.receive(rx_msg);
-        ESP_LOGD(TAG,"PGN: %u\n", rx_msg.PGN);
-        ESP_LOGD(TAG,"Data: %u\n", rx_msg.data[4]);
-        ESP_LOGD(TAG,"Data Length: %u\n", rx_msg.length);
-        ESP_LOGD(TAG,"\n");    
+        ESP_LOGD(TAG,"PGN: %u", rx_msg.PGN);
+        ESP_LOGD(TAG,"Data: %u", rx_msg.data[4]);
+        ESP_LOGD(TAG,"Data Length: %u", rx_msg.length);    
     }
 
 
