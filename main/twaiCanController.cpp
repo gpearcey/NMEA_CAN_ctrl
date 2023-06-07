@@ -2,12 +2,14 @@
 
 static const char* TAG = "twaiCanController";
 
-twaiCANController::twaiCANController(gpio_num_t txPin, gpio_num_t rxPin) : g_config(TWAI_GENERAL_CONFIG_DEFAULT(txPin, rxPin, TWAI_MODE_NORMAL)){}
+/* --------------------- Functions -------------------------------------------*/
+
+twaiCANController::twaiCANController(gpio_num_t txPin, gpio_num_t rxPin) : g_config_(TWAI_GENERAL_CONFIG_DEFAULT(txPin, rxPin, TWAI_MODE_NORMAL)), seq_count_(0){}
 
 void twaiCANController::init(){
    
     //Install TWAI driver
-    if (twai_driver_install(&g_config, &t_config, &f_config) == ESP_OK) {
+    if (twai_driver_install(&g_config_, &t_config_, &f_config_) == ESP_OK) {
         ESP_LOGI(TAG, "Driver installed\n");
     } else {
         ESP_LOGI(TAG, "Failed to install driver\n");
@@ -57,14 +59,89 @@ void twaiCANController::receive(NMEA_msg& msg){
 }
 
 void twaiCANController::transmit(NMEA_msg msg){
-    //convert message to twai (CAN) format
-    twai_message_t message = NMEAtoCAN(msg);
-    if (twai_transmit(&message, pdMS_TO_TICKS(1000)) == ESP_OK) {
+    if (msg.length > 8){
+        //message is larger than 8 bytes, transmit using fast packet
+        TransmitFastPacket(msg);
+    }
+    else{
+        //message fits in single CAN frame, transmit as normal
+        twai_message_t t_msg = NMEAtoCAN(msg);
+        TransmitNormal(t_msg);
+    }
+    return; 
+}
+
+void twaiCANController::TransmitNormal(twai_message_t t_msg){
+
+    if (twai_transmit(&t_msg, pdMS_TO_TICKS(1000)) == ESP_OK) {
         ESP_LOGI(TAG,"Message queued for transmission\n");
     } else {
         ESP_LOGI(TAG,"Failed to queue message for transmission\n");
     }
     return;
+}
+
+void twaiCANController::TransmitFastPacket(NMEA_msg msg){
+    twai_message_t t_msg;
+    
+    //Set fields that will be constant for all frames in message
+    t_msg.identifier = GetCanId(msg);
+    t_msg.rtr = 0;
+    t_msg.data_length_code = msg.length;
+    t_msg.extd = true;
+
+    //Increase sequence count if message has the same ID as last sent message
+    if (t_msg.identifier == this->prev_id_){
+        this->seq_count_++;
+        this->seq_count_ = this->seq_count_ % can_frame_size_;
+    }
+
+    int frame_count = 0;
+
+    //transmit the first frame
+    //the first byte of the first frame is the packet ID, the second byte is total message length in bytes
+    std::string str_seq_count = std::bitset<3>(seq_count_).to_string();
+    std::string str_frame_count = std::bitset<5>(frame_count).to_string();
+    std::string str_packet_id = str_seq_count + str_frame_count;
+    int packet_id = std::stoi(str_packet_id, nullptr, 2);
+
+    t_msg.data[0] = packet_id;
+    t_msg.data[1] = msg.length;
+    t_msg.data[2] = msg.data[0];
+    t_msg.data[3] = msg.data[1];
+    t_msg.data[4] = msg.data[2];
+    t_msg.data[5] = msg.data[3];
+    t_msg.data[6] = msg.data[4];
+    t_msg.data[7] = msg.data[5];
+
+    TransmitNormal(t_msg);
+
+    int data_idx = 6;
+
+    //Transmit remaining frames
+    while(data_idx < msg.length-1){
+        int i = 0;
+        std::string str_frame_count = std::bitset<5>(frame_count).to_string();
+        std::string str_packet_id = str_seq_count + str_frame_count;
+        int packet_id = std::stoi(str_packet_id, nullptr, 2);
+        t_msg.data[0] = packet_id;
+        i++;
+
+        for(; i < 8; i++){ 
+            if (data_idx >= msg.length){
+                //fill remaining bytes with 0xFF if reached end of data
+                t_msg.data[i] = 0xFF;
+            }
+            else{
+                t_msg.data[i] = msg.data[data_idx];
+                data_idx++;
+            }
+        }
+        TransmitNormal(t_msg);
+        frame_count++;
+    }
+    prev_id_ = t_msg.identifier;
+    return; 
 }
 
 twai_message_t twaiCANController::NMEAtoCAN(NMEA_msg msg){
@@ -74,13 +151,7 @@ twai_message_t twaiCANController::NMEAtoCAN(NMEA_msg msg){
     t_msg.rtr = 0;    
 
     //create CAN ID
-    std::string strPriority = std::bitset<3>(msg.priority).to_string();
-    std::string strPGN = std::bitset<18>(msg.PGN).to_string();
-    std::string strSrc = std::bitset<8>(msg.src).to_string();
-    std::string strID = strPriority + strPGN + strSrc;    
-    t_msg.identifier = std::stoi(strID, nullptr, 2);
-
-    ESP_LOGD(TAG, "Message ID Created: %lx \n", t_msg.identifier);
+    t_msg.identifier = GetCanId(msg);
 
     //all NMEA messages have extended 29 bt ID
     t_msg.extd = true;
@@ -99,6 +170,19 @@ twai_message_t twaiCANController::NMEAtoCAN(NMEA_msg msg){
 
     return t_msg;
 
+}
+
+int twaiCANController::GetCanId(NMEA_msg msg){
+    //create CAN ID
+    std::string strPriority = std::bitset<3>(msg.priority).to_string();
+    std::string strPGN = std::bitset<18>(msg.PGN).to_string();
+    std::string strSrc = std::bitset<8>(msg.src).to_string();
+    std::string strID = strPriority + strPGN + strSrc;    
+    int id = std::stoi(strID, nullptr, 2);
+
+    ESP_LOGD(TAG, "Message ID Created: %x \n", id);
+
+    return id;
 }
 
 NMEA_msg twaiCANController::CANtoNMEA(twai_message_t t_msg){
@@ -133,3 +217,4 @@ NMEA_msg twaiCANController::CANtoNMEA(twai_message_t t_msg){
     }
     return msg;
 }
+
