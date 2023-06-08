@@ -27,9 +27,10 @@ class twaiCANController : public CANController
         static constexpr twai_timing_config_t t_config_ = TWAI_TIMING_CONFIG_250KBITS();
         //Filter for incoming messages
         static constexpr twai_filter_config_t f_config_ = TWAI_FILTER_CONFIG_ACCEPT_ALL();
-        //Configure TX and RX pins, set twai mode
+        //Configure TX and RX pins, set twai mode (set in constructor)
         const twai_general_config_t g_config_; 
 
+        //constants needed for fast packet calculations
         static const int can_frame_size_ = 8;
         static const int first_fp_data_frame_size_ = 6;
         static const int fp_data_frame_size_ = 7;

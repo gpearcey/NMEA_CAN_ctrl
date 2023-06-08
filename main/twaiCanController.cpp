@@ -135,10 +135,8 @@ void twaiCANController::TransmitFastPacket(NMEA_msg msg){
             if (data_idx >= msg.length){
                 //fill remaining bytes with 0xFF if reached end of data
                 t_msg.data[i] = 0xFF;
+                //calculate data length code for last frame
                 t_msg.data_length_code = msg.length - first_fp_data_frame_size_ - ((frame_count-1) * fp_data_frame_size_);
-                ESP_LOGD(TAG, "msg.length: %d first_fp: %d, frame_count = %d, fp_data %d ",msg.length,first_fp_data_frame_size_, frame_count,fp_data_frame_size_);
-                ESP_LOGD(TAG, "data length code : %d", t_msg.data_length_code);
-                ESP_LOGD(TAG, "data index: %d : ", data_idx);
             }
             else{
                 t_msg.data[i] = msg.data[data_idx];

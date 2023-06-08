@@ -42,10 +42,10 @@ extern "C" void app_main(void)
     //Transmit fast packet messages
     for (int i = 0; i < 100; i++){
         NMEA_msg msg;
-        msg.PGN = 129029;
+        msg.PGN = 126996;
         msg.src = 5;
         msg.priority = 6;
-        msg.length = 43;
+        msg.length = 134;
         for(int i = 0; i<msg.length; i++){
             msg.data[i] = i;
         }
