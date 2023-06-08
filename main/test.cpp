@@ -43,7 +43,7 @@ extern "C" void app_main(void)
     for (int i = 0; i < 100; i++){
         NMEA_msg msg;
         msg.PGN = 129029;
-        msg.src = 2;
+        msg.src = 5;
         msg.priority = 6;
         msg.length = 43;
         for(int i = 0; i<msg.length; i++){

@@ -86,10 +86,10 @@ void twaiCANController::TransmitNormal(twai_message_t t_msg){
 void twaiCANController::TransmitFastPacket(NMEA_msg msg){
     twai_message_t t_msg;
     
-    //Set fields that will be constant for all frames in message
+    //Set fields that will be constant for all frames (except data_length_code in last frame) in message
     t_msg.identifier = GetCanId(msg);
     t_msg.rtr = 0;
-    t_msg.data_length_code = msg.length;
+    t_msg.data_length_code = 8;
     t_msg.extd = true;
 
     //Increase sequence count if message has the same ID as last sent message
@@ -99,8 +99,9 @@ void twaiCANController::TransmitFastPacket(NMEA_msg msg){
     }
 
     int frame_count = 0;
-
-    int total_frames = std::ceil(msg.length / can_frame_size_);
+    double test = (double)(msg.length-6) / 7;
+    int total_frames = std::ceil((double)(msg.length-6) / 7) + 1;
+    ESP_LOGD(TAG, "result of division %f",test);
 
     //transmit the first frame
     //the first byte of the first frame is the packet ID, the second byte is total message length in bytes
@@ -117,8 +118,9 @@ void twaiCANController::TransmitFastPacket(NMEA_msg msg){
     t_msg.data[5] = msg.data[3];
     t_msg.data[6] = msg.data[4];
     t_msg.data[7] = msg.data[5];
-    ESP_LOGD(TAG, "About to transmit fast packet frame %d of %d with id: %" PRIu32 " and data: %x %x %x %x %x %x %x %x ", frame_count, total_frames, t_msg.identifier, t_msg.data[0], t_msg.data[1], t_msg.data[2], t_msg.data[3], t_msg.data[4], t_msg.data[5], t_msg.data[6], t_msg.data[7]);
+    ESP_LOGD(TAG, "About to transmit fast packet frame %d of %d with id: %" PRIx32 " and data: %x %x %x %x %x %x %x %x ", (frame_count+1), total_frames, t_msg.identifier, t_msg.data[0], t_msg.data[1], t_msg.data[2], t_msg.data[3], t_msg.data[4], t_msg.data[5], t_msg.data[6], t_msg.data[7]);
     TransmitNormal(t_msg);
+    frame_count++;
 
     int data_idx = 6;
 
@@ -135,13 +137,14 @@ void twaiCANController::TransmitFastPacket(NMEA_msg msg){
             if (data_idx >= msg.length){
                 //fill remaining bytes with 0xFF if reached end of data
                 t_msg.data[i] = 0xFF;
+                t_msg.data_length_code = 2;
             }
             else{
                 t_msg.data[i] = msg.data[data_idx];
                 data_idx++;
             }
         }
-        ESP_LOGD(TAG, "About to transmit fast packet frame %d of %d with id: %" PRIu32 " and data: %x %x %x %x %x %x %x %x ", frame_count, total_frames, t_msg.identifier, t_msg.data[0], t_msg.data[1], t_msg.data[2], t_msg.data[3], t_msg.data[4], t_msg.data[5], t_msg.data[6], t_msg.data[7]);
+        ESP_LOGD(TAG, "About to transmit fast packet frame %d of %d with id: %" PRIu32 " and data: %x %x %x %x %x %x %x %x ", (frame_count+1), total_frames, t_msg.identifier, t_msg.data[0], t_msg.data[1], t_msg.data[2], t_msg.data[3], t_msg.data[4], t_msg.data[5], t_msg.data[6], t_msg.data[7]);
         TransmitNormal(t_msg);
         frame_count++;
     }
@@ -162,7 +165,7 @@ twai_message_t twaiCANController::NMEAtoCAN(NMEA_msg msg){
     t_msg.extd = true;
 
     //message length in bytes
-    t_msg.data_length_code = 8;
+    t_msg.data_length_code = msg.length;
     
     t_msg.data[0] = msg.data[0];
     t_msg.data[1] = msg.data[1];
