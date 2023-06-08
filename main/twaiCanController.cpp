@@ -99,9 +99,7 @@ void twaiCANController::TransmitFastPacket(NMEA_msg msg){
     }
 
     int frame_count = 0;
-    double test = (double)(msg.length-6) / 7;
-    int total_frames = std::ceil((double)(msg.length-6) / 7) + 1;
-    ESP_LOGD(TAG, "result of division %f",test);
+    int total_frames = std::ceil((double)(msg.length-first_fp_data_frame_size_) / fp_data_frame_size_) + 1;
 
     //transmit the first frame
     //the first byte of the first frame is the packet ID, the second byte is total message length in bytes
@@ -122,7 +120,7 @@ void twaiCANController::TransmitFastPacket(NMEA_msg msg){
     TransmitNormal(t_msg);
     frame_count++;
 
-    int data_idx = 6;
+    int data_idx = first_fp_data_frame_size_;
 
     //Transmit remaining frames
     while(data_idx < msg.length-1){
@@ -137,14 +135,17 @@ void twaiCANController::TransmitFastPacket(NMEA_msg msg){
             if (data_idx >= msg.length){
                 //fill remaining bytes with 0xFF if reached end of data
                 t_msg.data[i] = 0xFF;
-                t_msg.data_length_code = 2;
+                t_msg.data_length_code = msg.length - first_fp_data_frame_size_ - ((frame_count-1) * fp_data_frame_size_);
+                ESP_LOGD(TAG, "msg.length: %d first_fp: %d, frame_count = %d, fp_data %d ",msg.length,first_fp_data_frame_size_, frame_count,fp_data_frame_size_);
+                ESP_LOGD(TAG, "data length code : %d", t_msg.data_length_code);
+                ESP_LOGD(TAG, "data index: %d : ", data_idx);
             }
             else{
                 t_msg.data[i] = msg.data[data_idx];
                 data_idx++;
             }
         }
-        ESP_LOGD(TAG, "About to transmit fast packet frame %d of %d with id: %" PRIu32 " and data: %x %x %x %x %x %x %x %x ", (frame_count+1), total_frames, t_msg.identifier, t_msg.data[0], t_msg.data[1], t_msg.data[2], t_msg.data[3], t_msg.data[4], t_msg.data[5], t_msg.data[6], t_msg.data[7]);
+        ESP_LOGD(TAG, "About to transmit fast packet frame %d of %d with id: %" PRIx32 " and data: %x %x %x %x %x %x %x %x ", (frame_count+1), total_frames, t_msg.identifier, t_msg.data[0], t_msg.data[1], t_msg.data[2], t_msg.data[3], t_msg.data[4], t_msg.data[5], t_msg.data[6], t_msg.data[7]);
         TransmitNormal(t_msg);
         frame_count++;
     }

@@ -31,6 +31,8 @@ class twaiCANController : public CANController
         const twai_general_config_t g_config_; 
 
         static const int can_frame_size_ = 8;
+        static const int first_fp_data_frame_size_ = 6;
+        static const int fp_data_frame_size_ = 7;
         unsigned int seq_count_ : 3;
         int prev_id_;
 
