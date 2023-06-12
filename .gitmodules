@@ -6,3 +6,6 @@
 	path = external/NMEA2000
 	url = https://github.com/phatpaul/NMEA2000.git
 
+[submodule "external/NMEA2000_esp32"]
+	path = external/NMEA2000_esp32
+	url = git@github.com:gpearcey/NMEA2000_esp32.git
