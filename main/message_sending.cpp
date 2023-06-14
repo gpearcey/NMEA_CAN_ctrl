@@ -16,9 +16,9 @@ using tN2kSendFunction=void (*)();
 ESP32N2kStream serial;
 
 static const char* TAG = "message_sending.cpp";
-tNMEA2000_esp32 NMEA2000_rx;
-tNMEA2000_esp32 NMEA2000_tx;
-static TaskHandle_t N2K_tx_task_handle = NULL;
+tNMEA2000_esp32 NMEA2000;
+
+static TaskHandle_t N2K_task_handle = NULL;
 
 // Structure for holding message sending information
 struct tN2kSendMessage {
@@ -40,14 +40,11 @@ extern size_t nN2kSendMessages;
 static unsigned long N2kMsgSentCount=0;
 static unsigned long N2kMsgFailCount=0;
 static bool ShowSentMessages=false;
-//static bool ShowStatistics=false;
 static bool Sending=false;
-//static bool EnableForward=false;
 static tN2kScheduler NextStatsTime;
-//static unsigned long StatisticsPeriod=2000;
 
 void SendN2kMsg(const tN2kMsg &N2kMsg) {
-  if ( NMEA2000_tx.SendMsg(N2kMsg) ) {
+  if ( NMEA2000.SendMsg(N2kMsg) ) {
     N2kMsgSentCount++;
   } else {
     N2kMsgFailCount++;
@@ -56,7 +53,6 @@ void SendN2kMsg(const tN2kMsg &N2kMsg) {
 }
 void SendN2kPressure() {
     tN2kMsg N2kMsg;
-    //SetN2kPressure(N2kMsg,0,2,N2kps_Atmospheric,mBarToPascal(1024));
     N2kMsg.SetPGN(130314L);
     N2kMsg.Priority = 5;
     N2kMsg.AddByte(0);
@@ -67,8 +63,8 @@ void SendN2kPressure() {
     SendN2kMsg(N2kMsg);
 }
 // *****************************************************************************
-// Call back for NMEA2000_tx open. This will be called, when library starts bus communication.
-// See NMEA2000_tx.SetOnOpen(OnN2kOpen); on setup()
+// Call back for NMEA2000 open. This will be called, when library starts bus communication.
+// See NMEA2000.SetOnOpen(OnN2kOpen); on setup()
 // We initialize here all messages next sending time. Since we use tN2kSyncScheduler all messages
 // send offset will be synchronized to libary.
 void OnN2kOpen() {
@@ -115,89 +111,41 @@ void N2K_tx_task(void *pvParameters)
     TickType_t lastWakeTime = xTaskGetTickCount();
     ESP_LOGI(TAG, "Starting task");
     
-    NMEA2000_tx.SetN2kCANMsgBufSize(8);
-    NMEA2000_tx.SetN2kCANReceiveFrameBufSize(250);// not sure what this should be set to
+    NMEA2000.SetN2kCANMsgBufSize(8);
+    NMEA2000.SetN2kCANReceiveFrameBufSize(250);// not sure what this should be set to
 
-    NMEA2000_tx.SetForwardStream(new ESP32N2kStream()); // will need to change to WASM
-    NMEA2000_tx.SetForwardType(tNMEA2000::fwdt_Text);   // Show in clear text
-    // NMEA2000_tx.EnableForward(false);                 // Disable all msg forwarding to USB (=Serial)
+    NMEA2000.SetForwardStream(new ESP32N2kStream()); // will need to change to WASM expected format
+    NMEA2000.SetForwardType(tNMEA2000::fwdt_Text);   // Show in clear text
+    // NMEA2000.EnableForward(false);                 // Disable all msg forwarding to USB (=Serial)
 
-    //NMEA2000_tx.SetMsgHandler(HandleNMEA2000Msg);
+    //NMEA2000.SetMsgHandler(HandleNMEA2000Msg); //optional message handler will do somthing once desired message is received
 
     //do I need to do anything for group functions?
 
     // If you also want to see all traffic on the bus use N2km_ListenAndNode instead of N2km_NodeOnly below
-    NMEA2000_tx.SetMode(tNMEA2000::N2km_ListenAndSend, 22);//does 22 do anything in ListenOnly mode?
+    NMEA2000.SetMode(tNMEA2000::N2km_ListenAndSend, 22);//does 22 do anything in ListenOnly mode?
 
-    // Here we tell, which PGNs we transmit and receive we want to receive all!
+    // Here we could tell, which PGNs we transmit and receive
     //NMEA2000.ExtendTransmitMessages(TransmitMessages, 0);
     //NMEA2000.ExtendReceiveMessages(ReceiveMessages, 0);
 
     // Define OnOpen call back. This will be called, when CAN is open and system starts address claiming.
-    NMEA2000_tx.SetOnOpen(OnN2kOpen);
-    NMEA2000_tx.Open();
+    NMEA2000.SetOnOpen(OnN2kOpen);
+    NMEA2000.Open();
     for (;;)
     {
-        // put your main code here, to run repeatedly:
-
+        // this runs everytime the task runs:
       SendN2kMessages();
-      NMEA2000_tx.ParseMessages();  
-      //vTaskDelayUntil(&lastWakeTime, pdMS_TO_TICKS(10));
-      //vTaskDelay(pdMS_TO_TICKS(1000));   
-        
+      NMEA2000.ParseMessages();    
     }
     vTaskDelete(NULL); // should never get here...
 }
 #define AddSendPGN(fn,NextSend,Period,Offset,Enabled) {fn,#fn,NextSend,Period,Offset+300,Enabled}
 tN2kSendMessage N2kSendMessages[]={
-    AddSendPGN(SendN2kPressure,0,100,42,true) // 130314
+    AddSendPGN(SendN2kPressure,0,2000,42,true) // 130314
 };
 
 size_t nN2kSendMessages=sizeof(N2kSendMessages)/sizeof(tN2kSendMessage);
-
-//**************************************************below is for receiving
-
-static TaskHandle_t N2K_rx_task_handle = NULL;
-
-// This is a FreeRTOS task
-void N2K_rx_task(void *pvParameters)
-{
-    TickType_t lastWakeTime = xTaskGetTickCount();
-    ESP_LOGI(TAG, "Starting task");
-    
-    NMEA2000_rx.SetN2kCANMsgBufSize(8);
-    NMEA2000_rx.SetN2kCANReceiveFrameBufSize(223);// not sure what this should be set to
-
-    NMEA2000_rx.SetForwardStream(new ESP32N2kStream()); // will need to change to WASM
-    NMEA2000_rx.SetForwardType(tNMEA2000::fwdt_Text);   // Show in clear text
-    // NMEA2000.EnableForward(false);                 // Disable all msg forwarding to USB (=Serial)
-
-    //NMEA2000.SetMsgHandler(HandleNMEA2000Msg);
-
-    //do I need to do anything for group functions?
-
-    // If you also want to see all traffic on the bus use N2km_ListenAndNode instead of N2km_NodeOnly below
-    NMEA2000_rx.SetMode(tNMEA2000::N2km_ListenAndSend, 22);//does 22 do anything in ListenOnly mode?
-
-    // Here we tell, which PGNs we transmit and receive we want to receive all!
-    //NMEA2000.ExtendTransmitMessages(TransmitMessages, 0);
-    //NMEA2000.ExtendReceiveMessages(ReceiveMessages, 0);
-
-    // Define OnOpen call back. This will be called, when CAN is open and system starts address claiming.
-    NMEA2000_rx.Open();
-    for (;;)
-    {
-        // put your main code here, to run repeatedly:
-        //TaskN2kBinStatus();
-        
-        NMEA2000_rx.ParseMessages();
-        //vTaskDelayUntil(&lastWakeTime, pdMS_TO_TICKS(10));
-        //vTaskDelay(pdMS_TO_TICKS(1000));
-
-    }
-    vTaskDelete(NULL); // should never get here...
-}
-
 
 extern "C" int app_main(void)
 {
@@ -217,36 +165,14 @@ extern "C" int app_main(void)
         result = ESP_ERR_NO_MEM;
         goto err_out;
     }
-    //ESP_LOGV(TAG, "create rx task");
-    //xTaskCreate(
-    //    &N2K_rx_task,            // Pointer to the task entry function.
-    //    "Reading_task",           // A descriptive name for the task for debugging.
-    //    3072,                 // size of the task stack in bytes.
-    //    NULL,                 // Optional pointer to pvParameters
-    //    tskIDLE_PRIORITY + 6, // priority at which the task should run
-    //    &N2K_rx_task_handle      // Optional pass back task handle
-    //);
-    //if (N2K_rx_task_handle == NULL)
-    //{
-    //    ESP_LOGE(TAG, "Unable to create task.");
-    //    result = ESP_ERR_NO_MEM;
-    //    goto err_out;
-    //}
-
-
 
 err_out:
     if (result != ESP_OK)
     {
-        if (N2K_rx_task_handle != NULL)
+        if (N2K_task_handle != NULL)
         {
-            vTaskDelete(N2K_rx_task_handle);
-            N2K_rx_task_handle = NULL;
-        }
-        if (N2K_tx_task_handle != NULL)
-        {
-            vTaskDelete(N2K_tx_task_handle);
-            N2K_tx_task_handle = NULL;
+            vTaskDelete(N2K_task_handle);
+            N2K_task_handle = NULL;
         }
     }
 
