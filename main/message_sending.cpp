@@ -127,7 +127,7 @@ void N2K_tx_task(void *pvParameters)
     //do I need to do anything for group functions?
 
     // If you also want to see all traffic on the bus use N2km_ListenAndNode instead of N2km_NodeOnly below
-    NMEA2000_tx.SetMode(tNMEA2000::N2km_SendOnly, 22);//does 22 do anything in ListenOnly mode?
+    NMEA2000_tx.SetMode(tNMEA2000::N2km_ListenAndSend, 22);//does 22 do anything in ListenOnly mode?
 
     // Here we tell, which PGNs we transmit and receive we want to receive all!
     //NMEA2000.ExtendTransmitMessages(TransmitMessages, 0);
@@ -150,7 +150,7 @@ void N2K_tx_task(void *pvParameters)
 }
 #define AddSendPGN(fn,NextSend,Period,Offset,Enabled) {fn,#fn,NextSend,Period,Offset+300,Enabled}
 tN2kSendMessage N2kSendMessages[]={
-    AddSendPGN(SendN2kPressure,0,2000,42,true) // 130314
+    AddSendPGN(SendN2kPressure,0,100,42,true) // 130314
 };
 
 size_t nN2kSendMessages=sizeof(N2kSendMessages)/sizeof(tN2kSendMessage);
@@ -177,7 +177,7 @@ void N2K_rx_task(void *pvParameters)
     //do I need to do anything for group functions?
 
     // If you also want to see all traffic on the bus use N2km_ListenAndNode instead of N2km_NodeOnly below
-    NMEA2000_rx.SetMode(tNMEA2000::N2km_ListenOnly, 22);//does 22 do anything in ListenOnly mode?
+    NMEA2000_rx.SetMode(tNMEA2000::N2km_ListenAndSend, 22);//does 22 do anything in ListenOnly mode?
 
     // Here we tell, which PGNs we transmit and receive we want to receive all!
     //NMEA2000.ExtendTransmitMessages(TransmitMessages, 0);
@@ -208,7 +208,7 @@ extern "C" int app_main(void)
         "Sending_task",           // A descriptive name for the task for debugging.
         3072,                 // size of the task stack in bytes.
         NULL,                 // Optional pointer to pvParameters
-        tskIDLE_PRIORITY + 5, // priority at which the task should run
+        tskIDLE_PRIORITY, // priority at which the task should run
         &N2K_tx_task_handle      // Optional pass back task handle
     );
     if (N2K_tx_task_handle == NULL)
