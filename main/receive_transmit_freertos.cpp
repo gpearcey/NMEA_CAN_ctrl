@@ -106,9 +106,8 @@ void SendN2kMessages() {
 }
 
 // This is a FreeRTOS task
-void N2K_tx_task(void *pvParameters)
+void N2K_task(void *pvParameters)
 {
-    TickType_t lastWakeTime = xTaskGetTickCount();
     ESP_LOGI(TAG, "Starting task");
     
     NMEA2000.SetN2kCANMsgBufSize(8);
@@ -150,16 +149,16 @@ size_t nN2kSendMessages=sizeof(N2kSendMessages)/sizeof(tN2kSendMessage);
 extern "C" int app_main(void)
 {
     esp_err_t result = ESP_OK;
-    ESP_LOGV(TAG, "create tx task");
+    ESP_LOGV(TAG, "create task");
     xTaskCreate(
-        &N2K_tx_task,            // Pointer to the task entry function.
+        &N2K_task,            // Pointer to the task entry function.
         "Sending_task",           // A descriptive name for the task for debugging.
         3072,                 // size of the task stack in bytes.
         NULL,                 // Optional pointer to pvParameters
         tskIDLE_PRIORITY, // priority at which the task should run
-        &N2K_tx_task_handle      // Optional pass back task handle
+        &N2K_task_handle      // Optional pass back task handle
     );
-    if (N2K_tx_task_handle == NULL)
+    if (N2K_task_handle == NULL)
     {
         ESP_LOGE(TAG, "Unable to create task.");
         result = ESP_ERR_NO_MEM;

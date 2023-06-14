@@ -1,3 +1,3 @@
-idf_component_register(SRCS "mcp2515CanController.cpp" "message_sending.cpp" "ESP32N2kStream.cpp" "twaiCanController.cpp"
+idf_component_register(SRCS "mcp2515CanController.cpp" "receive_transmit_freertos.cpp" "ESP32N2kStream.cpp" "twaiCanController.cpp"
                        INCLUDE_DIRS "."
                        PRIV_REQUIRES esp32-mcp2515 driver freertos NMEA2000 NMEA2000_esp32)
