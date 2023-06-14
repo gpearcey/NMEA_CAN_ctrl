@@ -7,6 +7,9 @@
 #include "esp_log.h"
 #include "driver/twai.h"
 
+/**
+ * Can interact directly with twai controllers without the NMEA2000 library to send and receive messages
+*/
 class twaiCANController : public CANController
 {
     public:
